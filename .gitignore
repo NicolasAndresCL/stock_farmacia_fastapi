@@ -1,0 +1,72 @@
+# ===============================
+# Python
+# ===============================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+.env/
+.env.local
+
+# ===============================
+# FastAPI / Uvicorn
+# ===============================
+*.log
+
+# ===============================
+# PyInstaller
+# ===============================
+build/
+dist/
+*.spec
+
+# ===============================
+# Excel / Data (CRÍTICO)
+# ===============================
+app/data/uploads/
+app/data/processed/
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+
+# ===============================
+# OS / Editor
+# ===============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===============================
+# IDEs
+# ===============================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===============================
+# Node / Frontend (si agregas luego)
+# ===============================
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ===============================
+# Testing / Coverage
+# ===============================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ===============================
+# Misc
+# ===============================
+*.bak
+*.tmp
