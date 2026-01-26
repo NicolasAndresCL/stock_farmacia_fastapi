@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}
+Resultado | Stock Farmacia
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Archivos recibidos</h2>
+
+    <ul>
+        {% for file in files %}
+            <li>{{ file }}</li>
+        {% endfor %}
+    </ul>
+
+    <p>
+        Procesamiento de stock en desarrollo.
+    </p>
+
+    <a href="/upload">← Cargar más archivos</a>
+</div>
+{% endblock %}

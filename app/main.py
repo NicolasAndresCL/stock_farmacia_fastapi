@@ -1,10 +1,10 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pathlib import Path
 
 from app.core.paths import BASE_DIR
 from app.core.logger import logger
+from app.routers import ui
+
 
 # ===============================
 # App initialization
@@ -15,25 +15,20 @@ app = FastAPI(
     version="0.1.0"
 )
 
+logger.info("Starting Stock App")
+
 # ===============================
-# Paths
+# Static files
 # ===============================
-TEMPLATES_DIR = BASE_DIR / "app" / "templates"
 STATIC_DIR = BASE_DIR / "app" / "static"
 
-# ===============================
-# Static files & templates
-# ===============================
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    logger.info(f"Static files mounted from {STATIC_DIR}")
+else:
+    logger.warning(f"Static directory not found: {STATIC_DIR}")
 
 # ===============================
-# Routes (temporary here)
+# Routers
 # ===============================
-@app.get("/")
-async def home(request: Request):
-    logger.info("Home page loaded")
-    return templates.TemplateResponse(
-        "upload.html",
-        {"request": request}
-    )
+app.include_router(ui.router)
