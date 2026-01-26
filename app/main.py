@@ -1,22 +1,39 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
-from . import models, schemas, crud, database
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
 
-models.Base.metadata.create_all(bind=database.engine)
+from app.core.paths import BASE_DIR
+from app.core.logger import logger
 
-app = FastAPI(title="Stock Farmacia FastAPI")
+# ===============================
+# App initialization
+# ===============================
+app = FastAPI(
+    title="Stock App",
+    description="Sistema de cálculo de stock de medicamentos",
+    version="0.1.0"
+)
 
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# ===============================
+# Paths
+# ===============================
+TEMPLATES_DIR = BASE_DIR / "app" / "templates"
+STATIC_DIR = BASE_DIR / "app" / "static"
 
-@app.get("/medicamentos/", response_model=list[schemas.Medicamento])
-def leer_medicamentos(db: Session = Depends(get_db)):
-    return crud.get_medicamentos(db)
+# ===============================
+# Static files & templates
+# ===============================
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-@app.post("/medicamentos/", response_model=schemas.Medicamento)
-def crear_medicamento(medicamento: schemas.MedicamentoCreate, db: Session = Depends(get_db)):
-    return crud.create_medicamento(db, medicamento)
+# ===============================
+# Routes (temporary here)
+# ===============================
+@app.get("/")
+async def home(request: Request):
+    logger.info("Home page loaded")
+    return templates.TemplateResponse(
+        "upload.html",
+        {"request": request}
+    )
