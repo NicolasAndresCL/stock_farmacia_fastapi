@@ -1,77 +1,74 @@
 import pandas as pd
 from typing import List
-from pathlib import Path
 
 from app.core.logger import logger
 
 
 class StockService:
     """
-    Service responsible for reading, cleaning and consolidating
-    stock data from Excel files.
+    Servicio central de consolidación de stock.
+    NO lee Excel.
+    SOLO consolida movimientos.
     """
 
-    REQUIRED_COLUMNS = {
-        "medicamento",
-        "cantidad"
-    }
+    REQUIRED_COLUMNS = {"medicamento", "cantidad", "tipo"}
 
     @staticmethod
-    def read_excel_files(files: List[Path]) -> pd.DataFrame:
-        """
-        Read multiple Excel files and concatenate them
-        """
-        dataframes = []
-
-        for file_path in files:
-            logger.info(f"Reading file: {file_path}")
-
-            df = pd.read_excel(file_path)
-            df.columns = StockService.normalize_columns(df.columns)
-
-            StockService.validate_columns(df, file_path)
-
-            dataframes.append(df)
-
-        combined_df = pd.concat(dataframes, ignore_index=True)
-        logger.info(f"Combined dataframe shape: {combined_df.shape}")
-
-        return combined_df
-
-    @staticmethod
-    def normalize_columns(columns):
-        """
-        Normalize column names: lowercase, strip spaces
-        """
-        return (
-            pd.Series(columns)
+    def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+        df.columns = (
+            pd.Series(df.columns)
             .str.strip()
             .str.lower()
             .str.replace(" ", "_")
         )
+        return df
 
     @staticmethod
-    def validate_columns(df: pd.DataFrame, file_path: Path):
-        """
-        Ensure required columns exist
-        """
+    def validate_dataframe(df: pd.DataFrame, source: str = ""):
         missing = StockService.REQUIRED_COLUMNS - set(df.columns)
-
         if missing:
-            error_msg = f"{file_path.name} missing columns: {missing}"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
+            msg = f"DataFrame inválido{f' ({source})' if source else ''}. Faltan columnas: {missing}"
+            logger.error(msg)
+            raise ValueError(msg)
 
     @staticmethod
-    def calculate_stock(df: pd.DataFrame) -> pd.DataFrame:
+    def consolidate_movements(dfs: List[pd.DataFrame]) -> pd.DataFrame:
         """
-        Calculate real stock per medication
+        Une múltiples DataFrames de movimientos
         """
-        logger.info("Calculating stock")
+        logger.info("Consolidando movimientos de stock")
+
+        normalized = []
+
+        for idx, df in enumerate(dfs):
+            df = StockService.normalize_columns(df)
+            StockService.validate_dataframe(df, source=f"df_{idx}")
+            normalized.append(df)
+
+        movements_df = pd.concat(normalized, ignore_index=True)
+        logger.info(f"Movimientos totales: {len(movements_df)}")
+
+        return movements_df
+
+    @staticmethod
+    def calculate_stock(movements_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calcula el stock final por medicamento
+        """
+        logger.info("Calculando stock final")
+
+        df = movements_df.copy()
+
+        # Egresos restan
+        df["cantidad_real"] = df.apply(
+            lambda r: -r["cantidad"] if r["tipo"] == "egreso" else r["cantidad"],
+            axis=1
+        )
 
         stock_df = (
-            df.groupby("medicamento", as_index=False)["cantidad"]
+            df.groupby("medicamento", as_index=False)["cantidad_real"]
             .sum()
+            .rename(columns={"cantidad_real": "stock"})
             .sort_values("medicamento")
         )
 
